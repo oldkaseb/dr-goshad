@@ -1,17 +1,12 @@
-from collections import defaultdict
+### ✅ فایل نهایی: utils/state.py
 
-# وضعیت پاسخ‌دهی ادمین‌ها به کاربران
-# کلید: admin_id، مقدار: user_id
-reply_targets = defaultdict(int)
+reply_states = {}  # user_id: target_user_id
 
-def set_reply(admin_id, user_id):
-    """ادمین وارد حالت پاسخ‌دهی به یک کاربر می‌شود"""
-    reply_targets[admin_id] = user_id
+def set_reply(admin_id: int, target_id: int):
+    reply_states[admin_id] = target_id
 
-def get_reply(admin_id):
-    """بررسی اینکه آیا ادمین در حالت پاسخ‌دهی هست یا نه"""
-    return reply_targets.get(admin_id)
+def get_reply(admin_id: int):
+    return reply_states.get(admin_id)
 
-def clear_reply(admin_id):
-    """خروج ادمین از حالت پاسخ‌دهی پس از ارسال پاسخ"""
-    reply_targets.pop(admin_id, None)
+def clear_reply(admin_id: int):
+    reply_states.pop(admin_id, None)
