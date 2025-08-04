@@ -3,14 +3,19 @@ import os
 
 def load_json(filename):
     if not os.path.exists(filename):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, "w") as f:
             json.dump([], f)
+
     with open(filename, "r") as f:
-        return json.load(f)
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
 
 def save_json(filename, data):
     with open(filename, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 def add_user(user_data):
     users = load_json("data/users.json")
