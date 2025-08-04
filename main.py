@@ -6,31 +6,29 @@ from handlers.commands import (
     stats_handler,
     forall_handler,
     handle_broadcast_content,
-    admin_handler,
-    reply_handler
+    reply_handler,
+    add_admin_handler,
+    remove_admin_handler
 )
 from utils.state import get_reply
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
-# کامندهای اصلی
-dp.register_message_handler(start_handler, commands=["start"])
+# دستورات فارسی برای افزودن و حذف ادمین
+dp.register_message_handler(add_admin_handler, lambda msg: msg.text.startswith("افزودن ادمین"))
+dp.register_message_handler(remove_admin_handler, lambda msg: msg.text.startswith("حذف ادمین"))
+
+# آمار و ارسال همگانی
 dp.register_message_handler(stats_handler, commands=["stats"])
 dp.register_message_handler(forall_handler, commands=["forall"])
-dp.register_message_handler(admin_handler, commands=["admin"])
+dp.register_message_handler(handle_broadcast_content, content_types=types.ContentTypes.ANY)
 
 # فقط اگر ادمین در حالت پاسخ باشد، پیام بعدی را به کاربر بفرستد
 dp.register_message_handler(
     reply_handler,
     lambda msg: get_reply(msg.from_user.id) is not None,
     content_types=types.ContentTypes.TEXT
-)
-
-# پیام بعدی ادمین بعد از /forall، به همه کاربران ارسال شود
-dp.register_message_handler(
-    handle_broadcast_content,
-    content_types=types.ContentTypes.ANY
 )
 
 # دریافت پیام از کاربر (فقط در چت خصوصی)
