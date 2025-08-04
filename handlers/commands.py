@@ -1,6 +1,6 @@
 from aiogram import types
 from config import ADMIN_ID, ADMINS_FILE
-from utils.database import get_users, add_admin, remove_admin, is_admin, save_user
+from utils.db import get_users, add_admin, remove_admin, is_admin, save_user
 from utils.broadcast import broadcast_message
 import json
 import os
