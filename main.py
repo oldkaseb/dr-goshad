@@ -10,29 +10,22 @@ from utils.state import get_reply
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
-# 📌 هندلرهای کامندها
+# ثبت دستورات
 dp.register_message_handler(start_handler, commands=["start"])
-dp.register_message_handler(stats_handler, commands=["stats"])
-dp.register_message_handler(forall_handler, commands=["forall"])
+dp.register_message_handler(stats_handler, lambda m: m.text.lower().startswith("آمار"))
+dp.register_message_handler(forall_handler, lambda m: m.text.lower().startswith("پیام همگانی"))
+dp.register_message_handler(add_admin_handler, lambda m: m.text.lower().startswith("افزودن ادمین"))
+dp.register_message_handler(remove_admin_handler, lambda m: m.text.lower().startswith("حذف ادمین"))
 
-# 📌 دستورات متنی برای افزودن و حذف ادمین
-dp.register_message_handler(add_admin_handler, lambda m: m.text.startswith("افزودن ادمین "))
-dp.register_message_handler(remove_admin_handler, lambda m: m.text.startswith("حذف ادمین "))
+# هندل پیام پاسخ ادمین
+@dp.message_handler(lambda m: get_reply(m.from_user.id) is not None, content_types=types.ContentTypes.TEXT)
+async def handle_admin_reply(message: types.Message):
+    await reply_handler(message)
 
-# 📌 هندلر پیام‌های متنی از طرف ادمین در حالت پاسخ‌دهی
-
-dp.register_message_handler(
-    reply_handler,
-    lambda msg: get_reply(msg.from_user.id) is not None,
-    content_types=types.ContentTypes.TEXT
-)
-
-# 📌 پیام کاربر در چت خصوصی
-
+# فقط پیام کاربران در چت خصوصی
 dp.register_message_handler(user_message_handler, lambda msg: msg.chat.type == "private")
 
-# 📌 دکمه‌های پاسخ و بلاک
-
+# کال‌بک‌ها
 dp.register_callback_query_handler(admin_reply_callback, lambda c: c.data.startswith("reply"))
 dp.register_callback_query_handler(block_user_callback, lambda c: c.data.startswith("block"))
 
