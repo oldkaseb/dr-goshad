@@ -1,35 +1,50 @@
 from aiogram import types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config import ADMIN_ID
-from utils.db import is_blocked, get_admins
-from utils.state import set_reply
+from utils.db import add_user, is_admin, get_admins, is_blocked
+from utils.state import get_reply, set_reply, clear_reply
 
+# دریافت پیام کاربر
 async def user_message_handler(message: types.Message):
-    if is_blocked(message.from_user.id):
+    if message.chat.type != "private":
         return
 
-    text = (
-        f"📨 پیام جدید از {message.from_user.full_name} "
-        f"(@{message.from_user.username or 'بدون یوزرنیم'}):\n\n"
-        f"{message.text}"
-    )
-    keyboard = InlineKeyboardMarkup().add(
-        InlineKeyboardButton("✉️ پاسخ", callback_data=f"reply:{message.from_user.id}"),
-        InlineKeyboardButton("🚫 بلاک", callback_data=f"block:{message.from_user.id}")
-    )
+    user_id = message.from_user.id
+    if is_blocked(user_id):
+        return await message.reply("\u274c شما مسدود شده‌اید.")
 
-    for admin_id in [ADMIN_ID] + get_admins():
-        await message.bot.send_message(admin_id, text, reply_markup=keyboard)
+    add_user(user_id, message.from_user.full_name, message.from_user.username or "-")
 
-    await message.reply("✉️ پیام شما ارسال شد، منتظر پاسخ بمانید.")
+    for admin_id in get_admins():
+        try:
+            await message.bot.send_message(
+                admin_id,
+                f"\u2709\ufe0f پیام جدید از [{message.from_user.full_name}](tg://user?id={user_id}):\n\n{message.text}",
+                parse_mode="Markdown",
+                reply_markup=types.InlineKeyboardMarkup().add(
+                    types.InlineKeyboardButton("\u2709\ufe0f پاسخ", callback_data=f"reply:{user_id}"),
+                    types.InlineKeyboardButton("\u274c بلاک", callback_data=f"block:{user_id}")
+                )
+            )
+        except:
+            pass
+    await message.reply("\u2705 پیام شما برای پشتیبانی ارسال شد.")
 
-async def admin_reply_callback(callback_query: types.CallbackQuery):
-    user_id = int(callback_query.data.split(":")[1])
-    set_reply(callback_query.from_user.id, user_id)
-    await callback_query.answer("✉️ پیام بعدی شما برای این کاربر ارسال خواهد شد.")
+# پاسخ دادن از دکمه
+async def admin_reply_callback(callback: types.CallbackQuery):
+    admin_id = callback.from_user.id
+    if not is_admin(admin_id):
+        return
+    user_id = int(callback.data.split(":")[1])
+    set_reply(admin_id, user_id)
+    await callback.message.reply("\u2709\ufe0f لطفاً پاسخ خود را برای کاربر ارسال کنید.")
+    await callback.answer()
 
-async def block_user_callback(callback_query: types.CallbackQuery):
+# بلاک کردن کاربر
+async def block_user_callback(callback: types.CallbackQuery):
+    admin_id = callback.from_user.id
+    if not is_admin(admin_id):
+        return
+    user_id = int(callback.data.split(":")[1])
     from utils.db import block_user
-    user_id = int(callback_query.data.split(":")[1])
     block_user(user_id)
-    await callback_query.answer("🚫 کاربر بلاک شد. دیگر پیامی دریافت نخواهد کرد.")
+    await callback.message.reply("\u274c کاربر بلاک شد.")
+    await callback.answer()
