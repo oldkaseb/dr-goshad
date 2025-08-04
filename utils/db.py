@@ -1,51 +1,51 @@
 import json
 import os
-from datetime import datetime
 
-USERS_FILE = "data/users.json"
-ADMINS_FILE = "data/admins.json"
+DB_FILE = "database.json"
 
-# اطمینان از وجود فایل‌ها
-os.makedirs("data", exist_ok=True)
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, "w") as f:
-        json.dump([], f)
+def load_db():
+    if not os.path.exists(DB_FILE):
+        return {"users": {}, "admins": []}
+    with open(DB_FILE, "r") as f:
+        return json.load(f)
 
-if not os.path.exists(ADMINS_FILE):
-    with open(ADMINS_FILE, "w") as f:
-        json.dump([], f)
+def save_db(db):
+    with open(DB_FILE, "w") as f:
+        json.dump(db, f, indent=2)
 
-# 📦 کاربران
 def get_users():
-    with open(USERS_FILE, "r") as f:
-        return json.load(f)
+    return load_db().get("users", {})
 
-def save_user(user: dict):
-    users = get_users()
-    if not any(u["id"] == user["id"] for u in users):
-        user["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        users.append(user)
-        with open(USERS_FILE, "w") as f:
-            json.dump(users, f, indent=2)
-
-# 👮‍♂️ ادمین‌ها
 def get_admins():
-    with open(ADMINS_FILE, "r") as f:
-        return json.load(f)
+    return load_db().get("admins", [])
 
-def is_admin(user_id: int):
+def is_admin(user_id):
     return user_id in get_admins()
 
-def add_admin(user_id: int):
-    admins = get_admins()
-    if user_id not in admins:
-        admins.append(user_id)
-        with open(ADMINS_FILE, "w") as f:
-            json.dump(admins, f, indent=2)
+def add_admin(user_id):
+    db = load_db()
+    if user_id not in db["admins"]:
+        db["admins"].append(user_id)
+        save_db(db)
 
-def remove_admin(user_id: int):
-    admins = get_admins()
-    if user_id in admins:
-        admins.remove(user_id)
-        with open(ADMINS_FILE, "w") as f:
-            json.dump(admins, f, indent=2)
+def remove_admin(user_id):
+    db = load_db()
+    if user_id in db["admins"]:
+        db["admins"].remove(user_id)
+        save_db(db)
+
+def add_user(user_id, name, username):
+    db = load_db()
+    db["users"][str(user_id)] = {"name": name, "username": username}
+    save_db(db)
+
+def is_blocked(user_id):
+    db = load_db()
+    return str(user_id) in db.get("blocked", [])
+
+def block_user(user_id):
+    db = load_db()
+    if "blocked" not in db:
+        db["blocked"] = []
+    db["blocked"].append(str(user_id))
+    save_db(db)
